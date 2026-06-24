@@ -1,3 +1,4 @@
+$content = @'
 'use client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useConfigStore } from '@/store/configStore';
@@ -48,6 +49,7 @@ export function useDashboard() {
     prevRedRef.current = Object.fromEntries(query.data.map(c => [c.id, c.red]));
     if (totalNewRed > 0) {
       setAlert({ visible: true, newRedByCategory, totalNewRed });
+      try { const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); audio.volume = 0.5; audio.play().catch(() => {}); } catch(e) {}
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('⚠️ Centro de Monitoreo', { body: `${totalNewRed} ticket(s) nuevos vencidos`, icon: '/favicon.ico' });
       }
@@ -68,3 +70,5 @@ export function useDashboard() {
   const summary: DashboardSummary = query.data ? (() => { const total = query.data.reduce((s, c) => s + c.total, 0); const red = query.data.reduce((s, c) => s + c.red, 0); const yellow = query.data.reduce((s, c) => s + c.yellow, 0); const green = query.data.reduce((s, c) => s + c.green, 0); const compliance = total > 0 ? Math.round(((yellow + green) / total) * 100) : 100; const healthStatus = compliance >= 90 ? 'healthy' : compliance >= 70 ? 'at-risk' : 'critical'; return { totalTickets: total, redTickets: red, yellowTickets: yellow, greenTickets: green, compliance, healthStatus }; })() : { totalTickets: 0, redTickets: 0, yellowTickets: 0, greenTickets: 0, compliance: 0, healthStatus: 'critical' as const };
   return { categories: query.data ?? [], summary, loading: query.isLoading || serverConfigQuery.isLoading, error: query.error as Error | null, refetch, lastUpdated: query.dataUpdatedAt, alert, dismissAlert: () => setAlert({ visible: false, newRedByCategory: {}, totalNewRed: 0 }), hasServerConfig: serverConfigQuery.data?.hasServerConfig ?? false, jiraUrl: (serverConfigQuery.data?.jiraUrl as string) || '' };
 }
+'@
+Set-Content "$HOME\Downloads\centro-monitoreo\src\hooks\useDashboard.ts" $content -Encoding UTF8
