@@ -16,7 +16,7 @@ function classifyTicket(dueDate: string | null, createdDate: string, slaDefaultD
   }
 
   let status: TicketStatus;
-  if (daysRemaining < 0) status = "red";
+  if (daysRemaining <= 0) status = "red";
   else if (daysRemaining <= 3) status = "yellow";
   else status = "green";
 
@@ -79,3 +79,4 @@ export async function testJiraConnection(config: JiraConfig): Promise<{ success:
     return { success: false, error: e.message };
   }
 }
+
