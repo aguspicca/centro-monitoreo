@@ -33,7 +33,7 @@ export function useDashboard() {
   const prevRedRef = useRef<Record<string, number>>({});
   const [alert, setAlert] = useState<AlertState>({ visible: false, newRedByCategory: {}, totalNewRed: 0 });
   const serverConfigQuery = useQuery({ queryKey: ['server-config'], queryFn: fetchServerConfig, staleTime: Infinity });
-  const query = useQuery({ queryKey: ['dashboard', config, useMockData, serverConfigQuery.data], queryFn: () => fetchAllCategories(config, config.categories, useMockData, serverConfigQuery.data), refetchInterval: config.refreshInterval, staleTime: 60000, enabled: !serverConfigQuery.isLoading });
+  const query = useQuery({ queryKey: ['dashboard', config, useMockData, serverConfigQuery.data], queryFn: () => fetchAllCategories(config, config.categories, useMockData, serverConfigQuery.data), refetchInterval: config.refreshInterval, staleTime: 0, enabled: !serverConfigQuery.isLoading });
   useEffect(() => {
     if (!query.data) return;
     const newRedByCategory: Record<string, number> = {};
