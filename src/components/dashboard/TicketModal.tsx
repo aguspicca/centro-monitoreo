@@ -119,7 +119,7 @@ function TicketRow({ ticket, jiraUrl, statusDot }: { ticket: JiraTicket; jiraUrl
   return (
     <tr>
       <td>
-        {"https://divinf.atlassian.net" ? (
+        {jiraUrl ? (
           <a href={`${jiraUrl}/browse/${ticket.key}`} target="_blank" rel="noopener noreferrer"
              className="flex items-center gap-1 mono text-xs font-semibold hover:underline" style={{ color: "var(--blue)" }}>
             {ticket.key} <ExternalLink size={10} />
@@ -172,4 +172,3 @@ function TicketRow({ ticket, jiraUrl, statusDot }: { ticket: JiraTicket; jiraUrl
     </tr>
   );
 }
-
