@@ -1,4 +1,4 @@
-$content = @'
+"use client";
 'use client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useConfigStore } from '@/store/configStore';
