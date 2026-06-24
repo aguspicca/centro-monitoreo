@@ -7,12 +7,12 @@ import { MOCK_CATEGORIES } from '@/lib/mockData';
 import { useRef, useState, useEffect, useCallback } from 'react';
 
 async function fetchServerConfig() {
-  try { const res = await fetch('/api/server-config'); return await res.json(); } catch { return { hasServerConfig: false, categories: [], jiraUrl: '' }; }
+  try { const res = await fetch('/api/server-config'); return await res.json(); } catch { return { hasServerConfig: false, forceServerCategories: false, categories: [], jiraUrl: '' }; }
 }
 
-async function fetchAllCategories(config: any, clientCategories: any[], useMock: boolean, serverConfig: any): Promise<CategoryData[]> {
+async function fetchAllCategories(config: any, useMock: boolean, serverConfig: any): Promise<CategoryData[]> {
   if (useMock) { await new Promise(r => setTimeout(r, 800)); return MOCK_CATEGORIES; }
-  const categories = serverConfig?.categories?.length > 0 ? serverConfig.categories : clientCategories.filter((c: any) => c.enabled);
+  const categories = serverConfig?.categories?.length > 0 ? serverConfig.categories : config.categories.filter((c: any) => c.enabled);
   return Promise.all(categories.map(async (cat: any): Promise<CategoryData> => {
     try {
       const tickets = await fetchJiraTickets(config.jira, cat.jql);
@@ -34,7 +34,7 @@ export function useDashboard() {
   const prevRedRef = useRef<Record<string, number>>({});
   const [alert, setAlert] = useState<AlertState>({ visible: false, newRedByCategory: {}, totalNewRed: 0 });
   const serverConfigQuery = useQuery({ queryKey: ['server-config'], queryFn: fetchServerConfig, staleTime: Infinity });
-  const query = useQuery({ queryKey: ['dashboard', config, useMockData, serverConfigQuery.data], queryFn: () => fetchAllCategories(config, config.categories, useMockData, serverConfigQuery.data), refetchInterval: config.refreshInterval, staleTime: 0, enabled: !serverConfigQuery.isLoading });
+  const query = useQuery({ queryKey: ['dashboard', useMockData, serverConfigQuery.data], queryFn: () => fetchAllCategories(config, useMockData, serverConfigQuery.data), refetchInterval: config.refreshInterval, staleTime: 0, enabled: !serverConfigQuery.isLoading });
 
   useEffect(() => {
     if (!query.data) return;
