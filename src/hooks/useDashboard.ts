@@ -43,8 +43,9 @@ export function useDashboard() {
     if (totalNewRed > 0) setAlert({ visible: true, newRedByCategory, totalNewRed });
   }, [query.data]);
   const summary: DashboardSummary = query.data ? (() => { const total = query.data.reduce((s, c) => s + c.total, 0); const red = query.data.reduce((s, c) => s + c.red, 0); const yellow = query.data.reduce((s, c) => s + c.yellow, 0); const green = query.data.reduce((s, c) => s + c.green, 0); const compliance = total > 0 ? Math.round(((yellow + green) / total) * 100) : 100; const healthStatus = compliance >= 90 ? 'healthy' : compliance >= 70 ? 'at-risk' : 'critical'; return { totalTickets: total, redTickets: red, yellowTickets: yellow, greenTickets: green, compliance, healthStatus }; })() : { totalTickets: 0, redTickets: 0, yellowTickets: 0, greenTickets: 0, compliance: 0, healthStatus: 'critical' as const };
-  return { categories: query.data ?? [], summary, loading: query.isLoading || serverConfigQuery.isLoading, error: query.error as Error | null, refetch: () => { query.remove(); return query.refetch(); }, lastUpdated: query.dataUpdatedAt, alert, dismissAlert: () => setAlert({ visible: false, newRedByCategory: {}, totalNewRed: 0 }), hasServerConfig: serverConfigQuery.data?.hasServerConfig ?? false, jiraUrl: (serverConfigQuery.data?.jiraUrl as string) || '' };
+  return { categories: query.data ?? [], summary, loading: query.isLoading || serverConfigQuery.isLoading, error: query.error as Error | null, refetch: query.refetch, lastUpdated: query.dataUpdatedAt, alert, dismissAlert: () => setAlert({ visible: false, newRedByCategory: {}, totalNewRed: 0 }), hasServerConfig: serverConfigQuery.data?.hasServerConfig ?? false, jiraUrl: (serverConfigQuery.data?.jiraUrl as string) || '' };
 }
+
 
 
 
