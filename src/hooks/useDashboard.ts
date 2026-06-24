@@ -1,10 +1,10 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useConfigStore } from '@/store/configStore';
 import { CategoryData, DashboardSummary, AlertState } from '@/types';
 import { fetchJiraTickets } from '@/lib/jira';
 import { MOCK_CATEGORIES } from '@/lib/mockData';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 
 async function fetchServerConfig() {
   try { const res = await fetch('/api/server-config'); return await res.json(); } catch { return { hasServerConfig: false, categories: [], jiraUrl: '' }; }
@@ -30,22 +30,41 @@ async function fetchAllCategories(config: any, clientCategories: any[], useMock:
 
 export function useDashboard() {
   const { config, useMockData } = useConfigStore();
+  const queryClient = useQueryClient();
   const prevRedRef = useRef<Record<string, number>>({});
   const [alert, setAlert] = useState<AlertState>({ visible: false, newRedByCategory: {}, totalNewRed: 0 });
   const serverConfigQuery = useQuery({ queryKey: ['server-config'], queryFn: fetchServerConfig, staleTime: Infinity });
   const query = useQuery({ queryKey: ['dashboard', config, useMockData, serverConfigQuery.data], queryFn: () => fetchAllCategories(config, config.categories, useMockData, serverConfigQuery.data), refetchInterval: config.refreshInterval, staleTime: 0, enabled: !serverConfigQuery.isLoading });
+
   useEffect(() => {
     if (!query.data) return;
     const newRedByCategory: Record<string, number> = {};
     let totalNewRed = 0;
-    for (const cat of query.data) { const prev = prevRedRef.current[cat.id] ?? 0; const diff = cat.red - prev; if (diff > 0) { newRedByCategory[cat.name] = diff; totalNewRed += diff; } }
+    for (const cat of query.data) {
+      const prev = prevRedRef.current[cat.id] ?? 0;
+      const diff = cat.red - prev;
+      if (diff > 0) { newRedByCategory[cat.name] = diff; totalNewRed += diff; }
+    }
     prevRedRef.current = Object.fromEntries(query.data.map(c => [c.id, c.red]));
-    if (totalNewRed > 0) setAlert({ visible: true, newRedByCategory, totalNewRed });
+    if (totalNewRed > 0) {
+      setAlert({ visible: true, newRedByCategory, totalNewRed });
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('⚠️ Centro de Monitoreo', { body: `${totalNewRed} ticket(s) nuevos vencidos`, icon: '/favicon.ico' });
+      }
+    }
   }, [query.data]);
+
+  const refetch = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    await query.refetch();
+  }, [queryClient, query]);
+
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
   const summary: DashboardSummary = query.data ? (() => { const total = query.data.reduce((s, c) => s + c.total, 0); const red = query.data.reduce((s, c) => s + c.red, 0); const yellow = query.data.reduce((s, c) => s + c.yellow, 0); const green = query.data.reduce((s, c) => s + c.green, 0); const compliance = total > 0 ? Math.round(((yellow + green) / total) * 100) : 100; const healthStatus = compliance >= 90 ? 'healthy' : compliance >= 70 ? 'at-risk' : 'critical'; return { totalTickets: total, redTickets: red, yellowTickets: yellow, greenTickets: green, compliance, healthStatus }; })() : { totalTickets: 0, redTickets: 0, yellowTickets: 0, greenTickets: 0, compliance: 0, healthStatus: 'critical' as const };
-  return { categories: query.data ?? [], summary, loading: query.isLoading || serverConfigQuery.isLoading, error: query.error as Error | null, refetch: query.refetch, lastUpdated: query.dataUpdatedAt, alert, dismissAlert: () => setAlert({ visible: false, newRedByCategory: {}, totalNewRed: 0 }), hasServerConfig: serverConfigQuery.data?.hasServerConfig ?? false, jiraUrl: (serverConfigQuery.data?.jiraUrl as string) || '' };
+  return { categories: query.data ?? [], summary, loading: query.isLoading || serverConfigQuery.isLoading, error: query.error as Error | null, refetch, lastUpdated: query.dataUpdatedAt, alert, dismissAlert: () => setAlert({ visible: false, newRedByCategory: {}, totalNewRed: 0 }), hasServerConfig: serverConfigQuery.data?.hasServerConfig ?? false, jiraUrl: (serverConfigQuery.data?.jiraUrl as string) || '' };
 }
-
-
-
-
