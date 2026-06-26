@@ -16,7 +16,7 @@ import { LoginScreen } from "@/components/auth/LoginScreen";
 import { AlertCircle } from "lucide-react";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "analytics" | "config" | "gerencia">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "analytics" | "config">("dashboard");
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
   const { config, useMockData } = useConfigStore();
   const { isAuthenticated, role } = useAuthStore();
