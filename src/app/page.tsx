@@ -11,18 +11,45 @@ import { TicketModal } from "@/components/dashboard/TicketModal";
 import { ConfigPanel } from "@/components/dashboard/ConfigPanel";
 import { AlertBanner } from "@/components/alerts/AlertBanner";
 import { AnalyticsPanel } from "@/components/charts/AnalyticsPanel";
+import { GerenciaPanel } from "@/components/dashboard/GerenciaPanel";
 import { LoginScreen } from "@/components/auth/LoginScreen";
 import { AlertCircle } from "lucide-react";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "analytics" | "config">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "analytics" | "config" | "gerencia">("dashboard");
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
   const { config, useMockData } = useConfigStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, role } = useAuthStore();
   const { categories, summary, loading, error, refetch, lastUpdated, alert, dismissAlert } = useDashboard();
 
-  if (!isAuthenticated) {
-    return <LoginScreen />;
+  if (!isAuthenticated) return <LoginScreen />;
+
+  // Si es gerencia, mostrar solo panel gerencial
+  if (role === "gerencia") {
+    return (
+      <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
+        <div style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)", padding: "0 24px" }}>
+          <div className="max-w-screen-2xl mx-auto flex items-center justify-between h-14">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #7c6af7, #5b8def)" }}>
+                <span className="text-white text-xs font-bold">CM</span>
+              </div>
+              <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Centro de Monitoreo</span>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid var(--accent-border)" }}>Gerencia</span>
+            </div>
+            <button
+              onClick={() => useAuthStore.getState().logout()}
+              className="btn-secondary text-xs py-1.5"
+            >
+              Cerrar sesion
+            </button>
+          </div>
+        </div>
+        <main className="max-w-screen-2xl mx-auto px-6 py-6">
+          <GerenciaPanel categories={categories} loading={loading} />
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -66,11 +93,11 @@ export default function Home() {
               }
             </div>
             <div className="flex items-center gap-6 mt-6 pt-4" style={{ borderTop: "1px solid var(--border-subtle)" }}>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>Semáforo:</p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>Semaforo:</p>
               {[
-                { color: "var(--red)", label: "Vencido (< 0 días)" },
-                { color: "var(--yellow)", label: "Por vencer (1–3 días)" },
-                { color: "var(--green)", label: "A tiempo (> 3 días)" },
+                { color: "var(--red)", label: "Vencido (< 0 dias)" },
+                { color: "var(--yellow)", label: "Por vencer (1-3 dias)" },
+                { color: "var(--green)", label: "A tiempo (> 3 dias)" },
               ].map(({ color, label }) => (
                 <div key={label} className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
@@ -78,7 +105,7 @@ export default function Home() {
                 </div>
               ))}
               <div className="ml-auto text-xs mono" style={{ color: "var(--text-muted)" }}>
-                Auto-refresh cada 5 min · Haz clic en una tarjeta para ver detalle
+                Auto-refresh cada 5 min
               </div>
             </div>
           </>
