@@ -1,19 +1,42 @@
-import { NextRequest, NextResponse } from "next/server";
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const { username, password } = await request.json();
-    const validUser = process.env.APP_USERNAME || "admin";
-    const validPass = process.env.APP_PASSWORD || "monitoreo2024";
-    const gerenciaUser = process.env.GERENCIA_USERNAME || "gerencia";
-    const gerenciaPass = process.env.GERENCIA_PASSWORD || "gerencia2024";
-    if (username === validUser && password === validPass) {
-      return NextResponse.json({ success: true, role: "admin" });
+    const body = await request.json();
+    const { username, password } = body;
+    if (!username || !password) {
+      return Response.json(
+        { success: false, error: "Usuario y contrasena requeridos" },
+        { status: 400 }
+      );
     }
-    if (username === gerenciaUser && password === gerenciaPass) {
-      return NextResponse.json({ success: true, role: "gerencia" });
+    const isOperativo =
+      username === process.env.APP_USERNAME &&
+      password === process.env.APP_PASSWORD;
+    if (isOperativo) {
+      return Response.json({
+        success: true,
+        role: "operativo",
+        user: { username, email: `${username}@company.com` },
+      });
     }
-    return NextResponse.json({ success: false, error: "Usuario o contrasena incorrectos" }, { status: 401 });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+    const isGerencial =
+      username === process.env.GERENCIA_USERNAME &&
+      password === process.env.GERENCIA_PASSWORD;
+    if (isGerencial) {
+      return Response.json({
+        success: true,
+        role: "gerencial",
+        user: { username, email: `${username}@company.com` },
+      });
+    }
+    return Response.json(
+      { success: false, error: "Credenciales invalidas" },
+      { status: 401 }
+    );
+  } catch (error) {
+    console.error("Auth error:", error);
+    return Response.json(
+      { success: false, error: "Error interno del servidor" },
+      { status: 500 }
+    );
   }
 }
